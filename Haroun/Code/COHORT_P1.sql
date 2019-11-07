@@ -228,9 +228,12 @@ pf.subject_id,
 order by subject_id, hadm_id, icustay_id), 
 
 treatment as ( 
-select distinct subject_id, hadm_id, icustay_id, amount, count
+select distinct subject_id, hadm_id, icustay_id, NMB_amount_per_count, NMB_count, NMB_amount_per_hour, NMB_duration_h
 from 
-  ((select c.subject_id, c.hadm_id, c.icustay_id, avg(cv.amount) as amount, count(cv.amount) as count
+  ((select c.subject_id, c.hadm_id, c.icustay_id, avg(cv.amount) as  NMB_amount_per_count, count(cv.amount) as NMB_count, 
+  -- uom are mg (27127) and ml (2639) 
+  DATETIME_DIFF(max(cv.charttime), min(cv.charttime), hour) as NMB_duration_h,
+  sum(cv.amount) / (1 + DATETIME_DIFF(max(cv.charttime), min(cv.charttime), hour)) as NMB_amount_per_hour -- add 1 to avoid division by zero 
   from `NMB.cohort` c
   left outer join
   `MIMIC3_V1_4.INPUTEVENTS_CV` cv
@@ -243,7 +246,10 @@ from
   
   union all 
   
-  (select c.subject_id, c.hadm_id, c.icustay_id, avg(mv.amount) as amount, count(mv.amount) as count
+  (select c.subject_id, c.hadm_id, c.icustay_id, avg(mv.amount) as NMB_amount_per_count, count(mv.amount) as NMB_count, 
+  -- uom are mg (9333)
+  DATETIME_DIFF(max(mv.starttime), min(mv.starttime), hour) as NMB_duration_h,
+  sum(mv.amount) / (1 + DATETIME_DIFF(max(mv.starttime), min(mv.starttime), hour)) as NMB_amount_per_hour -- add 1 to avoid division by zero 
   from `NMB.cohort` c
   left outer join
   `MIMIC3_V1_4.INPUTEVENTS_MV` mv
@@ -254,12 +260,12 @@ from
   and mv.starttime > c.mv_starttime
   group by c.subject_id, c.hadm_id, c.icustay_id))
 
-where amount is not null
+where NMB_count is not null
 order by subject_id, hadm_id, icustay_id
 ), 
 
 final as (
-select distinct c.*, t.amount as NMB_avg_amount, t.count as NMB_count from cohort c
+select distinct c.*, t.NMB_count, t.NMB_amount_per_count, t.NMB_duration_h, t.NMB_amount_per_hour from cohort c 
 left outer join treatment t
 on c.subject_id = t.subject_id 
 and c.hadm_id = t.hadm_id 
