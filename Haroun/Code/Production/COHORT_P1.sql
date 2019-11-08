@@ -36,7 +36,7 @@ all_ICU_stays_3 as -- more information added about the icustay and the patient
         p.dob,
         h.Height,
         IF(w.Weight is null, IF(w.Weight_Admit is null, IF(w.Weight_Daily is null, IF(w.Weight_EchoInHosp is null, IF(w.Weight_EchoPreHosp is null,null,w.Weight_EchoPreHosp),w.Weight_EchoInHosp),w.Weight_Daily), w.Weight_Admit), w.Weight) AS weight,
-        p.dod,
+        dod,
         a.admission_type,
         a.admission_location,
         a.insurance,
@@ -242,10 +242,12 @@ from
   and c.icustay_id = cv.icustay_id 
   where cv.itemid in (select itemid from `NMB.NMBs` ) 
   and cv.charttime > c.mv_starttime
-  and lower(cv.AMOUNTUOM) like "mg"
-  group by c.subject_id, c.hadm_id, c.icustay_id)
+  group by c.subject_id, c.hadm_id, c.icustay_id
+  having max(lower(cv.AMOUNTUOM)) like "mg" -- to ensure patients only took MNBAs in g
+  and count(distinct cv.AMOUNTUOM) <= 1
+) -- to ensure patients did not take another NMBA in a differenct uom
   
-  union all 
+  union DISTINCT 
   
   (select c.subject_id, c.hadm_id, c.icustay_id, avg(mv.amount) as NMB_amount_per_count, count(mv.amount) as NMB_count, 
   -- uom are mg (9333)
@@ -259,7 +261,8 @@ from
   and c.icustay_id = mv.icustay_id 
   where mv.itemid in (select itemid from `NMB.NMBs`)
   and mv.starttime > c.mv_starttime
-  group by c.subject_id, c.hadm_id, c.icustay_id))
+  group by c.subject_id, c.hadm_id, c.icustay_id, mv.AMOUNTUOM)
+)
 
 where NMB_count is not null
 order by subject_id, hadm_id, icustay_id
@@ -278,5 +281,6 @@ and max_peep >= 5
 -- this adds up 7246 recoreds corresponding to unique hadm_id
 )
 
-select * 
+select *
 from final
+ 
