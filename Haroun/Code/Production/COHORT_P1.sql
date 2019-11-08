@@ -242,6 +242,7 @@ from
   and c.icustay_id = cv.icustay_id 
   where cv.itemid in (select itemid from `NMB.NMBs` ) 
   and cv.charttime > c.mv_starttime
+  and lower(cv.AMOUNTUOM) like "mg"
   group by c.subject_id, c.hadm_id, c.icustay_id)
   
   union all 
