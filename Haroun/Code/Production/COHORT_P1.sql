@@ -16,7 +16,7 @@ with all_ICU_stays as  -- all ICU stays
  
 ----------------------------------------------------------------------------------------------------------------
 
-all_ICU_stays_2 as  -- exclude paitents younger than 16yo and patients who stayed in ICU less than 12 hours
+all_ICU_stays_2 as  -- exclude patients younger than 16yo and patients who stayed in ICU less than 12 hours
 (select distinct subject_id, hadm_id, icustay_id, age, intime, outtime, los, icu_stay_rank 
  from all_ICU_stays where (age >= 16 and los*24 >= 12 ) -- los uom is fraction of days 
  group by subject_id, hadm_id, icustay_id, icu_stay_rank, age, los, intime, outtime
