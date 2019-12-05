@@ -275,7 +275,7 @@ on c.subject_id = t.subject_id
 and c.hadm_id = t.hadm_id 
 and c.icustay_id = t.icustay_id 
 
-where min_pao2fio2 <= 200 -- only include patients with hypoxemia 
+where min_pao2fio2 <= 150 -- only include patients with hypoxemia 
 -- and mv_durations_hours >= 48 -- only include patients who were on mechvent for >= 48 hours 
 and max_peep >= 5
 -- this adds up 7246 recoreds corresponding to unique hadm_id
