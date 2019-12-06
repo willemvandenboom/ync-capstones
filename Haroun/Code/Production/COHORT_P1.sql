@@ -283,4 +283,3 @@ and max_peep >= 5
 
 select *
 from final
- 
