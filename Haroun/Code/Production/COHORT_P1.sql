@@ -234,7 +234,7 @@ from
   -- uom are mg (27127) and ml (2639) 
   DATETIME_DIFF(max(cv.charttime), min(cv.charttime), hour) as NMB_duration_h,
   sum(cv.amount) / (1 + DATETIME_DIFF(max(cv.charttime), min(cv.charttime), hour)) as NMB_amount_per_hour -- add 1 to avoid division by zero 
-  from `NMB.cohort` c
+  from cohort c
   left outer join
   `MIMIC3_V1_4.INPUTEVENTS_CV` cv
   on c.subject_id = cv.subject_id 
@@ -253,7 +253,7 @@ from
   -- uom are mg (9333)
   DATETIME_DIFF(max(mv.starttime), min(mv.starttime), hour) as NMB_duration_h,
   sum(mv.amount) / (1 + DATETIME_DIFF(max(mv.starttime), min(mv.starttime), hour)) as NMB_amount_per_hour -- add 1 to avoid division by zero 
-  from `NMB.cohort` c
+  from cohort c
   left outer join
   `MIMIC3_V1_4.INPUTEVENTS_MV` mv
   on c.subject_id = mv.subject_id 
