@@ -230,10 +230,11 @@ order by subject_id, hadm_id, icustay_id),
 treatment as ( 
 select distinct subject_id, hadm_id, icustay_id, NMB_amount_per_count, NMB_count, NMB_amount_per_hour, NMB_duration_h
 from 
-  ((select c.subject_id, c.hadm_id, c.icustay_id, avg(cv.amount) as  NMB_amount_per_count, count(cv.amount) as NMB_count, 
+  (
+  (select c.subject_id, c.hadm_id, c.icustay_id, avg(cv.amount) as  NMB_amount_per_count, count(cv.amount) as NMB_count, 
   -- uom are mg (27127) and ml (2639) 
-  DATETIME_DIFF(max(cv.charttime), min(cv.charttime), hour) as NMB_duration_h,
-  sum(cv.amount) / (1 + DATETIME_DIFF(max(cv.charttime), min(cv.charttime), hour)) as NMB_amount_per_hour -- add 1 to avoid division by zero 
+  count(cv.amount) * 4.7 as NMB_duration_h,
+  sum(cv.amount) / (1 + count(cv.amount) * 4.7) as NMB_amount_per_hour -- add 1 to avoid division by zero 
   from cohort c
   left outer join
   `MIMIC3_V1_4.INPUTEVENTS_CV` cv
@@ -251,7 +252,7 @@ from
   
   (select c.subject_id, c.hadm_id, c.icustay_id, avg(mv.amount) as NMB_amount_per_count, count(mv.amount) as NMB_count, 
   -- uom are mg (9333)
-  DATETIME_DIFF(max(mv.starttime), min(mv.starttime), hour) as NMB_duration_h,
+  sum(DATETIME_DIFF(mv.endtime, mv.starttime, hour)) as NMB_duration_h,
   sum(mv.amount) / (1 + DATETIME_DIFF(max(mv.starttime), min(mv.starttime), hour)) as NMB_amount_per_hour -- add 1 to avoid division by zero 
   from cohort c
   left outer join
@@ -278,8 +279,9 @@ and c.icustay_id = t.icustay_id
 where min_pao2fio2 <= 150 -- only include patients with hypoxemia 
 -- and mv_durations_hours >= 48 -- only include patients who were on mechvent for >= 48 hours 
 and max_peep >= 5
--- this adds up 7246 recoreds corresponding to unique hadm_id
+-- this adds up 4312 recoreds corresponding to unique hadm_id
 )
 
 select *
 from final
+where NMB_count is not null
