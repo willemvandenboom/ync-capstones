@@ -370,39 +370,39 @@ WITH
         c.hadm_id,
         c.icustay_id,
         mv.AMOUNTUOM)
-    UNION DISTINCT (
-      SELECT
-        c.subject_id,
-        c.hadm_id,
-        c.icustay_id,
-        AVG(cv.amount) AS NMB_amount_per_count,
-        COUNT(cv.amount) AS NMB_count,
-        -- uom are mg (27127) and ml (2639)
-        COUNT(cv.amount) * 4.7 AS NMB_duration_h,
-        -- 4.7 is the average duration of ARDS dose in CareView
-        SUM(cv.amount) / (1 + COUNT(cv.amount) * 4.7) AS NMB_amount_per_hour -- add 1 to avoid division by zero
-      FROM
-        cohort c
-      LEFT OUTER JOIN
-        `MIMIC3_V1_4.INPUTEVENTS_CV` cv
-      ON
-        c.subject_id = cv.subject_id
-        AND c.hadm_id = cv.hadm_id
-        AND c.icustay_id = cv.icustay_id
-      WHERE
-        cv.itemid IN (
-        SELECT
-          itemid
-        FROM
-          `NMB.NMBs` )
-        AND cv.charttime > c.mv_starttime
-      GROUP BY
-        c.subject_id,
-        c.hadm_id,
-        c.icustay_id
-      HAVING
-        MAX(LOWER(cv.AMOUNTUOM)) LIKE "mg" -- to ensure patients only took MNBAs in g
-        AND COUNT(DISTINCT cv.AMOUNTUOM) <= 1 ) -- to ensure patients did not take another NMBA in a differenct uom
+--     UNION DISTINCT (
+--       SELECT
+--         c.subject_id,
+--         c.hadm_id,
+--         c.icustay_id,
+--         AVG(cv.amount) AS NMB_amount_per_count,
+--         COUNT(cv.amount) AS NMB_count,
+--         -- uom are mg (27127) and ml (2639)
+--         COUNT(cv.amount) * 4.7 AS NMB_duration_h,
+--         -- 4.7 is the average duration of ARDS dose in CareView
+--         SUM(cv.amount) / (1 + COUNT(cv.amount) * 4.7) AS NMB_amount_per_hour -- add 1 to avoid division by zero
+--       FROM
+--         cohort c
+--       LEFT OUTER JOIN
+--         `MIMIC3_V1_4.INPUTEVENTS_CV` cv
+--       ON
+--         c.subject_id = cv.subject_id
+--         AND c.hadm_id = cv.hadm_id
+--         AND c.icustay_id = cv.icustay_id
+--       WHERE
+--         cv.itemid IN (
+--         SELECT
+--           itemid
+--         FROM
+--           `NMB.NMBs` )
+--         AND cv.charttime > c.mv_starttime
+--       GROUP BY
+--         c.subject_id,
+--         c.hadm_id,
+--         c.icustay_id
+--       HAVING
+--         MAX(LOWER(cv.AMOUNTUOM)) LIKE "mg" -- to ensure patients only took MNBAs in g
+--         AND COUNT(DISTINCT cv.AMOUNTUOM) <= 1 ) -- to ensure patients did not take another NMBA in a differenct uom
       )
   WHERE
     NMB_count IS NOT NULL
@@ -435,5 +435,5 @@ SELECT
   *
 FROM
   final
-WHERE
-  NMB_count IS NOT NULL
+-- WHERE
+--   NMB_count IS NOT NULL
