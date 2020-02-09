@@ -430,7 +430,7 @@ WITH
     min_pao2fio2 <= 150 -- only include patients with hypoxemia
     -- and mv_durations_hours >= 48 -- only include patients who were on mechvent for >= 48 hours
     AND max_peep >= 5
-    -- this adds up 4312 recoreds corresponding to unique hadm_id
+    -- this adds up 4312 records corresponding to unique hadm_id
     )
 SELECT
   *
