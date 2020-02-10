@@ -260,14 +260,16 @@ WITH
     AND mv.hadm_id = c.hadm_id
     AND mv.icustay_id = c.icustay_id
   WHERE
+  -- PF ratio time constraits
     datetime_diff(mv.mv_starttime,
       bgfd.charttime,
       HOUR) <= 24
-    AND mv.mv_starttime < bgfd.charttime
+    AND mv.mv_starttime <= bgfd.charttime
+  -- PEEP time constraints
     AND datetime_diff(mv.mv_starttime,
       c.charttime,
       HOUR) <= 24
-    AND mv.mv_starttime < c.charttime
+    AND mv.mv_starttime <= c.charttime
     AND c.itemid IN (60,
       437,
       505,
