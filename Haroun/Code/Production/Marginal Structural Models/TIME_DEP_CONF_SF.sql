@@ -6,7 +6,7 @@ SELECT
   c.mv_starttime,
   c.mv_endtime,
   sf.SF_ratio,
-  sf.charttime AS sf_charttime,
+  DATETIME(sf.charttime) AS sf_charttime,
   -- we select all sf ratios taken during the mechanical ventilation period along with their timestamps
 FROM
   `ync-capstones.NMB.COHORT_BASELINE_P2` c
