@@ -17,8 +17,8 @@ ON
   AND c.hadm_id = bgfd.hadm_id
   AND c.icustay_id = bgfd.icustay_id
 WHERE
-  c.mv_starttime < bgfd.charttime
-  AND c.mv_endtime > bgfd.charttime
+  c.mv_starttime <= bgfd.charttime
+  AND c.mv_endtime >= bgfd.charttime
   AND bgfd.pao2fio2 IS NOT NULL
 ORDER BY
   c.subject_id,

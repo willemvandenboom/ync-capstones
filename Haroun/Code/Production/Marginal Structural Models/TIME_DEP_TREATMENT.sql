@@ -23,7 +23,7 @@ SELECT DISTINCT * FROM (
       itemid
     FROM
       `ync-capstones.NMB.NMBAs` )
-    AND mv.starttime > c.mv_starttime -- N.B.: first mv is Metvavision and second mv is mechanical ventilation  
+    AND mv.starttime >= c.mv_starttime -- N.B.: first mv is Metvavision and second mv is mechanical ventilation  
 
   UNION ALL
 
@@ -50,7 +50,7 @@ SELECT DISTINCT * FROM (
       itemid
     FROM
       `ync-capstones.NMB.NMBAs` )
-    AND cv.charttime > c.mv_starttime
+    AND cv.charttime >= c.mv_starttime
     --       AND
     --         LOWER(cv.AMOUNTUOM) LIKE "mg" -- to ensure patients only took MNBAs in g
     --         AND COUNT(DISTINCT cv.AMOUNTUOM) <= 1 ) -- to ensure patients did not take another NMBA in a differenct uom
