@@ -1,0 +1,63 @@
+with fio2_table as ( select ce.subject_id, 
+       ce.hadm_id, 
+       ce.icustay_id, 
+       ce.itemid, 
+        ce.charttime as FiO2_charttime, 
+        (case 
+        when itemid = 223835
+        then case
+                when valuenum > 0 and valuenum <= 1
+                then valuenum * 100           -- improperly input data - looks like O2 flow in litres
+                when valuenum > 1 and valuenum < 21
+                then null
+                when valuenum >= 21 and valuenum <= 100
+                then valuenum
+                else null end                    -- unphysiological
+        when itemid in (3420, 3422)    -- all these values are well formatted
+         then valuenum
+        when itemid = 190 and valuenum > 0.20 and valuenum <= 1     -- well formatted but not in %
+         then valuenum * 100
+        else null
+        end) as FiO2_valuenum, 
+       valueuom as FiO2_valueuom
+
+from `ync-capstones.MIMIC3_V1_4.CHARTEVENTS` as ce
+),
+
+oxygen_therapy AS (
+SELECT * FROM `ync-capstones.MIMIC_V1_4_derived.oxygen_therapy`
+), 
+
+fio2_24 as (SELECT DISTINCT
+    fio2_table.icustay_id, 
+    COUNT(fio2_table.FiO2_valuenum) OVER(PARTITION BY fio2_table.icustay_id) AS n_FiO2_24,
+    PERCENTILE_CONT(fio2_table.FiO2_valuenum, 0.5) OVER(PARTITION BY fio2_table.icustay_id) AS median_fio2_24,
+    AVG(fio2_table.FiO2_valuenum) OVER(PARTITION BY fio2_table.icustay_id) AS average_fio2_24,
+From fio2_table
+  INNER JOIN oxygen_therapy ON fio2_table.icustay_id = oxygen_therapy.icustay_id
+WHERE DATETIME_DIFF(fio2_table.FiO2_charttime, oxygen_therapy.vent_start_first , HOUR) <= 24
+), 
+
+
+fio2_minus_24 as (SELECT DISTINCT
+    fio2_table.icustay_id, 
+    COUNT(fio2_table.FiO2_valuenum) OVER(PARTITION BY fio2_table.icustay_id) AS n_fio2_minus__24,
+    PERCENTILE_CONT(fio2_table.FiO2_valuenum, 0.5) OVER(PARTITION BY fio2_table.icustay_id) AS median_fio2_minus__24,
+    AVG(fio2_table.FiO2_valuenum) OVER(PARTITION BY fio2_table.icustay_id) AS average_fio2_minus__24,
+From fio2_table
+  INNER JOIN oxygen_therapy ON fio2_table.icustay_id = oxygen_therapy.icustay_id
+WHERE DATETIME_DIFF(fio2_table.FiO2_charttime, oxygen_therapy.vent_start_first , HOUR) > 24
+)
+
+select fio2_table.*, 
+fio2_24.* EXCEPT(icustay_id), 
+fio2_minus_24.* EXCEPT(icustay_id)
+
+from fio2_table 
+LEFT JOIN fio2_24 
+    on fio2_table.icustay_id = fio2_24.icustay_id
+LEFT JOIN fio2_minus_24 
+    on fio2_table.icustay_id = fio2_minus_24.icustay_id
+   where FiO2_valuenum is not null
+   and fio2_table.icustay_id is not null
+ORDER BY icustay_id

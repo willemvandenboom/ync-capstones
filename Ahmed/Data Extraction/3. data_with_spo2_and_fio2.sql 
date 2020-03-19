@@ -1,0 +1,24 @@
+with temp_table as (select distinct table1.*,
+table2.* EXCEPT(hadm_id, icustay_id, subject_id)
+from Ahmed_Project_Final.patient_results_and_spo2 as table1
+full outer join  Ahmed_Project_Final.fio2 as table2
+on table1.icustay_id = table2.icustay_id 
+  and table1.charttime = table2.FiO2_charttime
+  where table1.icustay_id is not null
+  and table2.FiO2_valuenum is not null -- remove rows with no FiO2 value 
+order by table1.icustay_id, table1.charttime), 
+
+-- There are repeated values in above table so we remove them below 
+table1 as (select distinct * EXCEPT(ICD9_CODE, SEQ_NUM, ROW_ID)
+from temp_table), 
+table2 as (select icustay_id, charttime, count(*) as count from table1 group by icustay_id, charttime), 
+table3 as (select icustay_id, charttime,avg(spO2_Value) as new_SPO2 from table1 group by icustay_id,charttime) 
+Select distinct table2.*, table1.* except(icustay_id, charttime, spo2_value), table3.new_SPO2  
+from table2 
+  left join table1
+    on table2.icustay_id = table1.icustay_id
+    and  table2.charttime = table1.charttime 
+  left join table3 
+    on table2.icustay_id = table3.icustay_id
+    and  table2.charttime = table3.charttime 
+WHERE(ABS(new_SPO2 - spO2_Value) <=2.5) # Remove any rows in which the the two old repeated values are 5 away from one another 
