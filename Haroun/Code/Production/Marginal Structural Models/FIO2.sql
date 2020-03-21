@@ -1,20 +1,21 @@
-with stg_spo2 as
-(
-  select HADM_ID, CHARTTIME
-    -- avg here is just used to group SpO2 by charttime
-    , avg(valuenum) as SpO2
-  from `ync-capstones.MIMIC3_V1_4.CHARTEVENTS` 
-  -- o2 sat
-  where ITEMID in
-  (
-    646 -- SpO2
-  , 220277 -- O2 saturation pulseoxymetry
-  )
-  and valuenum > 0 and valuenum <= 100
-  and hadm_id in (select hadm_id from `ync-capstones.NMB.COHORT_BASELINE_P1`) -- added this line to reduce complexity of later extraction  
-  group by HADM_ID, CHARTTIME
-)
-, stg_fio2 as
+-- with stg_spo2 as
+-- (
+--   select HADM_ID, CHARTTIME
+--     -- avg here is just used to group SpO2 by charttime
+--     , avg(valuenum) as SpO2
+--   from `ync-capstones.MIMIC3_V1_4.CHARTEVENTS` 
+--   -- o2 sat
+--   where ITEMID in
+--   (
+--     646 -- SpO2
+--   , 220277 -- O2 saturation pulseoxymetry
+--   )
+--   and valuenum > 0 and valuenum <= 100
+--   and hadm_id in (select hadm_id from `ync-capstones.NMB.COHORT_BASELINE_P1`) -- added this line to reduce complexity of later extraction  
+--   group by HADM_ID, CHARTTIME
+-- )
+-- , 
+with stg_fio2 as
 (
   select HADM_ID, CHARTTIME
     -- pre-process the FiO2s to ensure they are between 21-100%
@@ -53,7 +54,8 @@ with stg_spo2 as
   group by HADM_ID, CHARTTIME
 )
 
-select distinct s.hadm_id, s.Spo2 / f.Fio2 as SF_ratio, TIMESTAMP_TRUNC(TIMESTAMP(s.charttime), HOUR) as charttime
-from stg_spo2 s join stg_fio2 f 
-on s.hadm_id = f.hadm_id 
-and  TIMESTAMP_TRUNC(TIMESTAMP(s.charttime), HOUR) = TIMESTAMP_TRUNC(TIMESTAMP(f.charttime), HOUR) 
+select distinct f.hadm_id, f.Fio2, TIMESTAMP(f.charttime) as Fio2_charttime -- TIMESTAMP_TRUNC(TIMESTAMP(s.charttime), HOUR) as charttime
+-- from stg_spo2 s join 
+from stg_fio2 f 
+-- on s.hadm_id = f.hadm_id 
+-- and  TIMESTAMP_TRUNC(TIMESTAMP(s.charttime), HOUR) = TIMESTAMP_TRUNC(TIMESTAMP(f.charttime), HOUR) 
