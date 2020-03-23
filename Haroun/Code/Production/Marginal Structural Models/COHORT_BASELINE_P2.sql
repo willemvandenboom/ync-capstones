@@ -5,7 +5,7 @@ group by icustay_id),
 
 final as
 (
-select distinct c.*, case p.gender when 'F' then 1 else 0 end as female, o.oasis, e.elixhauser_vanwalraven as elixhauser, v.vaso 
+select distinct c.*, case p.gender when 'F' then 1 else 0 end as female, o.oasis, e.elixhauser_vanwalraven as elixhauser, v.vaso, sepsis.explicit_sepsis 
 from `ync-capstones.NMB.COHORT_BASELINE_P1` c
 
 left outer join `ync-capstones.MIMIC_V1_4_derived.oasis` o
@@ -25,9 +25,14 @@ left outer join vasopressor v
 on c.icustay_id = v.icustay_id
 -- cohort size does not change 
 
+left outer join `ync-capstones.MIMIC_V1_4_derived.angus_sepsis` sepsis
+on c.subject_id = sepsis.subject_id
+and c.hadm_id = sepsis.hadm_id
+-- cohort size does not change 
+
 left outer join `ync-capstones.MIMIC3_V1_4.PATIENTS` p 
 on p.subject_id = c.subject_id 
 ) 
 
 select * except (vaso), case vaso when 1 then 1 else 0 end as vaso  
-from final 
+from final # 3820
