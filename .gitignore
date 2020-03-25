@@ -2,6 +2,9 @@
 node_modules/
 someOtherfoler/
 
+# DS store 
+**/.DS_Store
+
 
 # Compiled source #
 ###################
