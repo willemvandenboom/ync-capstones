@@ -3,7 +3,7 @@
 --   select HADM_ID, CHARTTIME
 --     -- avg here is just used to group SpO2 by charttime
 --     , avg(valuenum) as SpO2
---   from `ync-capstones.MIMIC3_V1_4.CHARTEVENTS` 
+--   from `physionet-data.mimiciii_clinical.CHARTEVENTS` 
 --   -- o2 sat
 --   where ITEMID in
 --   (
@@ -39,7 +39,7 @@ with stg_fio2 as
             then valuenum * 100
       else null end
     ) as Fio2
-  from `ync-capstones.MIMIC3_V1_4.CHARTEVENTS`
+  from `physionet-data.mimiciii_clinical.chartevents`
   where ITEMID in
   (
     3420 -- FiO2

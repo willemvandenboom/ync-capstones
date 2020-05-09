@@ -1,5 +1,5 @@
 select *  
-from `ync-capstones.MIMIC3_V1_4.D_ITEMS` 
+from `physionet-data.mimiciii_clinical.d_items` 
 where LOWER(label) like "%tracu%" -- cisatracurium
 or LOWER(label) like "nim%" -- nimbex
 or LOWER(label) like "doxacu%" -- Doxacurium

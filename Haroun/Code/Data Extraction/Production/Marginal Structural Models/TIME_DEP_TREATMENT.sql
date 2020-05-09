@@ -12,7 +12,7 @@ SELECT DISTINCT * FROM (
   FROM
     `ync-capstones.NMB.COHORT_BASELINE_P2` c
   LEFT OUTER JOIN
-    `ync-capstones.MIMIC3_V1_4.INPUTEVENTS_MV` mv
+    `physionet-data.mimiciii_clinical.inputevents_mv` mv
   ON
     c.subject_id = mv.subject_id
     AND c.hadm_id = mv.hadm_id
@@ -39,7 +39,7 @@ SELECT DISTINCT * FROM (
   FROM
     `ync-capstones.NMB.COHORT_BASELINE_P2` c
   LEFT OUTER JOIN
-    `ync-capstones.MIMIC3_V1_4.INPUTEVENTS_CV` cv
+    `physionet-data.mimiciii_clinical.inputevents_cv` cv
   ON
     c.subject_id = cv.subject_id
     AND c.hadm_id = cv.hadm_id

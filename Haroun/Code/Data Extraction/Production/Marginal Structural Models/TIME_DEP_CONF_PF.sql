@@ -11,7 +11,7 @@ SELECT
 FROM
   `ync-capstones.NMB.COHORT_BASELINE_P2` c
 LEFT OUTER JOIN
-  `ync-capstones.MIMIC_V1_4_derived.bloodgasfirstdayarterial` bgfd
+  `physionet-data.mimiciii_derived.bloodgasfirstdayarterial` bgfd
 ON
   c.subject_id = bgfd.subject_id
   AND c.hadm_id = bgfd.hadm_id

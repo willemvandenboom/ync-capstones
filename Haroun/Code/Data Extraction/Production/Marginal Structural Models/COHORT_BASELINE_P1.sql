@@ -13,9 +13,9 @@ WITH
     los,
     rank () OVER (PARTITION BY a.hadm_id ORDER BY i.intime) AS icu_stay_rank
   FROM
-    `ync-capstones.MIMIC3_V1_4.PATIENTS` p,
-    `ync-capstones.MIMIC3_V1_4.ADMISSIONS` a,
-    `ync-capstones.MIMIC3_V1_4.ICUSTAYS` i
+    `physionet-data.mimiciii_clinical.patients` p,
+    `physionet-data.mimiciii_clinical.admissions` a,
+    `physionet-data.mimiciii_clinical.icustays` i
   WHERE
     p.subject_id=a.subject_id
     AND p.subject_id=i.subject_id
@@ -109,20 +109,20 @@ WITH
   FROM
     all_ICU_stays_2 ie
   LEFT JOIN
-    `ync-capstones.MIMIC3_V1_4.PATIENTS` p
+    `physionet-data.mimiciii_clinical.patients` p
   ON
     ie.subject_id = p.subject_id
   LEFT JOIN
-    `ync-capstones.MIMIC3_V1_4.ADMISSIONS` a
+    `physionet-data.mimiciii_clinical.admissions` a
   ON
     a.subject_id = ie.subject_id
     AND a.hadm_id = ie.hadm_id
   LEFT JOIN
-    `ync-capstones.MIMIC_V1_4_derived.heightfirstday` h
+    `physionet-data.mimiciii_derived.heightfirstday` h
   ON
     h.icustay_id = ie.icustay_id
   LEFT JOIN
-    `ync-capstones.MIMIC_V1_4_derived.weightfirstday` w
+    `physionet-data.mimiciii_derived.weightfirstday` w
   ON
     w.icustay_id = ie.icustay_id
     --group by subject_id, hadm_id, icustay_id, intime, outtime, age, los
@@ -217,7 +217,7 @@ WITH
   FROM
     first_ICU_stay a
   INNER JOIN
-    `ync-capstones.MIMIC_V1_4_derived.ventdurations` b
+    `physionet-data.mimiciii_derived.ventdurations` b
   ON
     a.icustay_id = b.icustay_id
   WHERE
@@ -270,13 +270,13 @@ WITH
   FROM
     mech_venti_on_first_ICU_stay mv
   LEFT OUTER JOIN
-    `ync-capstones.MIMIC_V1_4_derived.bloodgasfirstdayarterial` bgfd
+    `physionet-data.mimiciii_derived.bloodgasfirstdayarterial` bgfd
   ON
     mv.subject_id = bgfd.subject_id
     AND mv.hadm_id = bgfd.hadm_id
     AND mv.icustay_id = bgfd.icustay_id
   LEFT OUTER JOIN
-    `ync-capstones.MIMIC3_V1_4.CHARTEVENTS` c
+    `physionet-data.mimiciii_clinical.chartevents` c
   ON
     mv.subject_id = c.subject_id
     AND mv.hadm_id = c.hadm_id
@@ -388,7 +388,7 @@ WITH
 --       FROM
 --         cohort c
 --       LEFT OUTER JOIN
---         `ync-capstones.MIMIC3_V1_4.INPUTEVENTS_MV` mv
+--         `physionet-data.mimiciii_clinical.inputevents_mv` mv
 --       ON
 --         c.subject_id = mv.subject_id
 --         AND c.hadm_id = mv.hadm_id
@@ -419,7 +419,7 @@ WITH
 --       FROM
 --         cohort c
 --       LEFT OUTER JOIN
---         `ync-capstones.MIMIC3_V1_4.INPUTEVENTS_CV` cv
+--         `physionet-data.mimiciii_clinical.inputevents_cv` cv
 --       ON
 --         c.subject_id = cv.subject_id
 --         AND c.hadm_id = cv.hadm_id
