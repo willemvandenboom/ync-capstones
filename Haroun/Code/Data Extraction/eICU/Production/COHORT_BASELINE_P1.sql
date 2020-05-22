@@ -93,10 +93,17 @@ pf_ratio as
 from fio2
 inner join pao2 
 on fio2.patientunitstayid = pao2.patientunitstayid
-where fio2.respchartoffset > pao2.labresultoffset - 240
-or fio2.respchartoffset > pao2.labresultoffset + 240
+where fio2.respchartoffset between pao2.labresultoffset - 240 and pao2.labresultoffset + 240
 -- values are less than 4 hours apart
 ), 
+
+peep as 
+(
+  select lab.patientunitstayid, max(labresult) as peep, patientunitstayid as peep_offset
+  from `physionet-data.eicu_crd.lab` lab
+  where LOWER(labname) like "%peep%"
+  group by patientunitstayid
+),
 
 min_pf_ratio as (
 select patientunitstayid, min(pf) as min_pf
@@ -104,16 +111,15 @@ from pf_ratio
 group by patientunitstayid), 
  
 final as 
-(select mv.*, pf.min_pf, lab.labresult as peep
+(select mv.*, pf.min_pf, peep.peep
 from on_mech_vent mv
 inner join min_pf_ratio pf
 on mv.patientunitstayid = pf.patientunitstayid 
-inner join `physionet-data.eicu_crd.lab` lab
-on lab.patientunitstayid = mv.patientunitstayid
-where LOWER(labname) like "%peep%"
-and lab.labresultoffset between -1440 + vent_start and 1440 + vent_start)
+inner join peep 
+on mv.patientunitstayid = peep.patientunitstayid)
 
 select * 
 from final 
 where min_pf <= 150 
-and peep >= 5 -- 20827 icustays
+and peep >= 5
+-- 6947
