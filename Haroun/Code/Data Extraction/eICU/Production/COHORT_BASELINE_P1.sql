@@ -29,7 +29,7 @@ with allICU as
   --   dischargeweight,
   --   unitdischargetime24,
   --   unitdischargelocation		
-  from `oxygenators-209612.eicu.patient` -- table of ICU stays confusingly called "patients"
+  from `physionet-data.eicu_crd.patient` -- table of ICU stays confusingly called "patients"
   where unitDischargeOffset > 720 -- los is longer than 12 hours
   ), 
 
@@ -50,60 +50,70 @@ on_mech_vent as(
 
 pao2 as --pao2 from lab
 (
-select patientunitstayid, min(labresult) as pao2
+select lab.patientunitstayid, labresult as pao2, lab.labresultoffset
 from 
-  (select * from `oxygenators-209612.eicu.lab`
-  where lower(labname) like 'pao2%') 
-where labresultoffset between -1440 and 1440
-group by patientunitstayid)
+  (select * 
+  from `physionet-data.eicu_crd.lab` lab
+  where lower(labname) like 'pao2%') lab
+left outer join on_mech_vent mv 
+on lab.patientunitstayid = mv.patientunitstayid
+where labresultoffset between -1440 + vent_start and 1440 + vent_start
+-- group by patientunitstayid
+)
 ,
 
 fio2 as --FIO2 from respchart
-  (
-  SELECT
-    *
-  FROM (
-    SELECT
-      DISTINCT patientunitstayid,
+  (SELECT
+      DISTINCT rp.patientunitstayid,
       case 
-              when MAX(CAST(respchartvalue AS numeric)) > 0 and MAX(CAST(respchartvalue AS numeric)) <= 1
-                then MAX(CAST(respchartvalue AS numeric)) * 100
+              when CAST(respchartvalue AS numeric) > 0 and CAST(respchartvalue AS numeric) <= 1
+                then CAST(respchartvalue AS numeric) * 100
               -- improperly input data - looks like O2 flow in litres
-              when MAX(CAST(respchartvalue AS numeric)) > 1 and MAX(CAST(respchartvalue AS numeric)) < 21
+              when CAST(respchartvalue AS numeric) > 1 and CAST(respchartvalue AS numeric) < 21
                 then null
-              when MAX(CAST(respchartvalue AS numeric)) >= 21 and MAX(CAST(respchartvalue AS numeric)) <= 100
-                then MAX(CAST(respchartvalue AS numeric))
+              when CAST(respchartvalue AS numeric) >= 21 and CAST(respchartvalue AS numeric) <= 100
+                then CAST(respchartvalue AS numeric)
               else null end -- unphysiological
-       as fio2
+       as fio2,
       -- , max(case when respchartvaluelabel = 'FiO2' then respchartvalue else null end) as fiO2
+      rp.respchartoffset
     FROM
-      `oxygenators-209612.eicu.respiratorycharting`
+      `physionet-data.eicu_crd.respiratorycharting` rp
+      left outer join on_mech_vent mv 
+      on rp.patientunitstayid = mv.patientunitstayid
     WHERE
-      respchartoffset BETWEEN -1440 AND 1440
+      respchartoffset BETWEEN -1440 + vent_start and 1440 + vent_start
       AND respchartvalue <> ''
       AND REGEXP_CONTAINS(respchartvalue, '^[0-9]{0,2}$')
-    GROUP BY
-      patientunitstayid) AS tempo
   ORDER BY
     patientunitstayid),
     
 pf_ratio as 
-(select fio2.patientunitstayid, 100 * pao2.pao2 / fio2.fio2 as pf_ratio
+(select fio2.patientunitstayid, 100 * pao2.pao2 / fio2.fio2 as pf, fio2.respchartoffset as fio2_offset, pao2.labresultoffset as pao2_offset
 from fio2
 inner join pao2 
-on fio2.patientunitstayid = pao2.patientunitstayid), 
+on fio2.patientunitstayid = pao2.patientunitstayid
+where fio2.respchartoffset > pao2.labresultoffset - 240
+or fio2.respchartoffset > pao2.labresultoffset + 240
+-- values are less than 4 hours apart
+), 
+
+min_pf_ratio as (
+select patientunitstayid, min(pf) as min_pf
+from pf_ratio
+group by patientunitstayid), 
  
 final as 
-(select mv.*, pf.pf_ratio, lab.labresult as peep
+(select mv.*, pf.min_pf, lab.labresult as peep
 from on_mech_vent mv
-inner join pf_ratio pf
+inner join min_pf_ratio pf
 on mv.patientunitstayid = pf.patientunitstayid 
-inner join `oxygenators-209612.eicu.lab` lab
+inner join `physionet-data.eicu_crd.lab` lab
 on lab.patientunitstayid = mv.patientunitstayid
 where LOWER(labname) like "%peep%"
-and lab.labresultoffset BETWEEN -1440 AND 1440)
+and lab.labresultoffset between -1440 + vent_start and 1440 + vent_start)
 
 select * 
 from final 
-where pf_ratio <= 150 
-and peep >= 5
+where min_pf <= 150 
+and peep >= 5 -- 20827 icustays
