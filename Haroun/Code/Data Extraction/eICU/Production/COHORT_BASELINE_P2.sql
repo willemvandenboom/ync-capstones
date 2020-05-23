@@ -4,7 +4,7 @@
 -- explicit_sepsis	INTEGER	NULLABLE -- sepsis_from_diagnosis
 -- vaso	INTEGER	NULLABLE -- pivoted_treatment_vasopressor
 
-select  cohort.* , apache.apache, sepsis.sepsis, vaso.vaso
+select  cohort.* , apache.apache, sepsis.sepsis, case vaso.vaso when 1 then 1 else 0 end as vaso 
 from `NMB_eICU.COHORT_BASELINE_P1` cohort
 left outer join 
   (select patientunitstayid , avg(apachescore) as apache
@@ -21,6 +21,10 @@ left outer join
   from `physionet-data.eicu_crd_derived.pivoted_treatment_vasopressor` 
   group by patientunitstayid) vaso
 on cohort.patientunitstayid = vaso.patientunitstayid
+where apache is not null 
+and sepsis is not null 
+and vaso is not null
+-- 6947 becomes 
 
 
 
