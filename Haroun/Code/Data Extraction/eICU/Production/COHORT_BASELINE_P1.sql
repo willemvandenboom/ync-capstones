@@ -41,7 +41,7 @@ firstICU as (
 on_mech_vent as(
   select icu.*, ox.vent_start, ox.vent_end,	ox.oxygen_therapy_type,	ox.supp_oxygen	
   from firstICU icu 
-  inner join `oxygenators-209612.eicu.eicu_oxygen_therapy` ox
+  inner join `NMB_eICU.eicu_oxygen_therapy` ox
   on icu.patientunitstayid = ox.icustay_id
   where ox.ventnum = 1),
 

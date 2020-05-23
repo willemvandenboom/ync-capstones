@@ -1,16 +1,19 @@
+-- this code is taken from the oxygenators project 
+-- https://github.com/nus-mornin-lab/oxygenation_kc/blob/master/data-extraction/eICU/eicu_oxygen_therapy.sql
+
 WITH respchart AS (
 	SELECT *
-	FROM `oxygenators-209612.eicu.respiratorycharting`
+  FROM `physionet-data.eicu_crd.respiratorycharting` 
 )
 
 , nursechart AS (
 	SELECT *
-	FROM `oxygenators-209612.eicu.nursecharting`
+  FROM `physionet-data.eicu_crd.nursecharting` 
 )
 
 , pat AS (
 	SELECT *
-	FROM `oxygenators-209612.eicu.patient`
+	FROM `physionet-data.eicu_crd.patient` 
 )
 
 
