@@ -43,7 +43,8 @@ on_mech_vent as(
   from firstICU icu 
   inner join `NMB_eICU.eicu_oxygen_therapy` ox
   on icu.patientunitstayid = ox.icustay_id
-  where ox.ventnum = 1),
+  where ox.ventnum = 1
+  and oxygen_therapy_type = 4),
 
 ------------------------------------------------------------------------------------------------------------------------
 -- now we compute PF ratios
