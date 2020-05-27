@@ -1,6 +1,6 @@
 with vasopressor as (
 select distinct icustay_id, 1 as vaso
-from `ync-capstones.MIMIC_V1_4_derived.vasopressordurations` 
+from `physionet-data.mimiciii_derived.vasopressordurations` 
 group by icustay_id),
 
 final as
@@ -8,24 +8,23 @@ final as
 select distinct c.*, case p.gender when 'F' then 1 else 0 end as female, o.oasis, e.elixhauser_vanwalraven as elixhauser, v.vaso, sepsis.explicit_sepsis 
 from `ync-capstones.NMB.COHORT_BASELINE_P1` c
 
-left outer join `ync-capstones.MIMIC_V1_4_derived.oasis` o
+left outer join `physionet-data.mimiciii_derived.oasis` o
 -- Oxford Acute Severity of Illness Score (OASIS) calculated on the first dat of ICU stay - one per icustay_id (checked) 
 on c.subject_id = o.subject_id
 and c.hadm_id = o.hadm_id
 and c.icustay_id = o.icustay_id
 -- cohort size does not change 
 
-left outer join `ync-capstones.MIMIC_V1_4_derived.elixhauser_ahrq_score` e 
+left outer join `physionet-data.mimiciii_derived.elixhauser_quan_score` e 
 -- comorbidity is the presence of one or more additional conditions co-occurring with ARDS - use of elixhauser_vanwalraven method - one per hadm_id (checked) 
-on c.subject_id = e.subject_id
-and c.hadm_id = e.hadm_id
+on c.hadm_id = e.hadm_id
 -- cohort size does not change 
 
 left outer join vasopressor v
 on c.icustay_id = v.icustay_id
 -- cohort size does not change 
 
-left outer join `ync-capstones.MIMIC_V1_4_derived.angus_sepsis` sepsis
+left outer join `physionet-data.mimiciii_derived.angus_sepsis` sepsis
 on c.subject_id = sepsis.subject_id
 and c.hadm_id = sepsis.hadm_id
 -- cohort size does not change 
